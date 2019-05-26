@@ -807,18 +807,18 @@ struct class_rw_t {
     uint32_t flags;
     uint32_t version;
 
-    const class_ro_t *ro;
+    const class_ro_t *ro; //对象只读行相关信息
 
-    method_array_t methods;
-    property_array_t properties;
-    protocol_array_t protocols;
+    method_array_t methods;     //方法列表 二维数组
+    property_array_t properties;// 属性列表
+    protocol_array_t protocols; // 协议列表
 
     Class firstSubclass;
     Class nextSiblingClass;
 
     char *demangledName;
 
-#if SUPPORT_INDEXED_ISA
+#if SUPPORT_INDEXED_ISA //Apple Watch 苹果表的if
     uint32_t index;
 #endif
 
