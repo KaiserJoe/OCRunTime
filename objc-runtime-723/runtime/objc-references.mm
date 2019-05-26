@@ -274,21 +274,24 @@ void _object_set_associative_reference(id object, void *key, id value, uintptr_t
     id new_value = value ? acquireValue(value, policy) : nil;
     {
         AssociationsManager manager;
-        
-        //
+        //全局的HASH MAP
         AssociationsHashMap &associations(manager.associations());
+        //DISGUISE 执行按位取反,作为与对象关联的Key值
         disguised_ptr_t disguised_object = DISGUISE(object);
         if (new_value) {
             // break any existing association.
+            //根据对象指针在 map 表中进行查找
             AssociationsHashMap::iterator i = associations.find(disguised_object);
             if (i != associations.end()) {
                 // secondary table exists
                 ObjectAssociationMap *refs = i->second;
                 ObjectAssociationMap::iterator j = refs->find(key);
                 if (j != refs->end()) {
+                    //找到,新值 替换 旧值
                     old_association = j->second;
                     j->second = ObjcAssociation(policy, new_value);
                 } else {
+                    //没找到,作为新值 存储
                     (*refs)[key] = ObjcAssociation(policy, new_value);
                 }
             } else {
@@ -306,6 +309,7 @@ void _object_set_associative_reference(id object, void *key, id value, uintptr_t
                 ObjectAssociationMap::iterator j = refs->find(key);
                 if (j != refs->end()) {
                     old_association = j->second;
+                    //value为空的情况下会进行擦除操作,所以知道能用来干嘛了吧/
                     refs->erase(j);
                 }
             }
