@@ -541,7 +541,7 @@ struct class_ro_t {
     const char * name;
     method_list_t * baseMethodList;
     protocol_list_t * baseProtocols;
-    const ivar_list_t * ivars;
+    const ivar_list_t * ivars; // 类 成员变量
     
     // weak修饰的ivars
     const uint8_t * weakIvarLayout;
