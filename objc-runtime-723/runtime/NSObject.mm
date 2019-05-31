@@ -344,19 +344,18 @@ storeWeak(id *location, objc_object *newObj)
     // haveNew表示初始化weak指针，haveOld表示释放weak指针
  retry:
     /**
-     SideTables()用来保存整个程序所有被weak指针指向的对象，和应用程序是一对一的。每个对象对应其中的一个元素，例如一个两个weak指针指向同一个对象，则这个对象对应一个SideTable对象，这个对象中保存这两个weak指针。
+     SideTables()用来保存整个程序所有被weak指针指向的对象，和应用程序是一对一的。
+     每个对象对应其中的一个元素，例如一个两个weak指针指向同一个对象，则这个对象对应一个SideTable对象，这个对象中保存这两个weak指针。
      在被指向的对象第一次传入时，会创建新的内存空间，如果是第二次被weak指向则取出之前的weak_table。当释放weak指针时也是如此，先取出SideTable对象再从weak_table中移除对应的weak指针。
      例如下面在haveNew添加或创建weak指针时，其创建的SideTable内存地址是0x00000001008c8000，则其销毁时会取出同样的对象出来。
      */
-    if (haveOld) {
+    if (haveOld) {// haveOld == YES 从表中取出oldObj 指针对应的 SideTable
         oldObj = *location;
-        // 从表中取出weak指针tableView
         oldTable = &SideTables()[oldObj];
     } else {
         oldTable = nil;
     }
-    if (haveNew) {
-        // 分配一块新的内存，新内存初始化均为空
+    if (haveNew) {// haveNew == YES 从表中取出newObj 指针对应的 SideTable
         newTable = &SideTables()[newObj];
     } else {
         newTable = nil;
@@ -397,8 +396,9 @@ storeWeak(id *location, objc_object *newObj)
         weak_unregister_no_lock(&oldTable->weak_table, oldObj, location);
     }
 
-    // 向weak表中添加弱引用
     if (haveNew) {
+        
+        // 向weak表中添加
         newObj = (objc_object *)
             weak_register_no_lock(&newTable->weak_table, (id)newObj, location, 
                                   crashIfDeallocating);
@@ -474,14 +474,14 @@ objc_storeWeakOrNil(id *location, id newObj)
  * @param newObj Object ptr. 
  */
 id
-objc_initWeak(id *location, id newObj)
+objc_initWeak(id *location, id newObj)//*location weak修饰的指针   newObj是指针指向的对象
 {
     if (!newObj) {
         *location = nil;
         return nil;
     }
 
-    return storeWeak<DontHaveOld, DoHaveNew, DoCrashIfDeallocating>
+    return storeWeak<DontHaveOld, DoHaveNew, DoCrashIfDeallocating>//三个BOOL值
         (location, (objc_object*)newObj);
 }
 

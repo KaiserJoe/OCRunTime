@@ -6398,15 +6398,14 @@ void *objc_destructInstance(id obj)
         bool cxx = obj->hasCxxDtor();
         // 对象是否有相关联的引用
         bool assoc = obj->hasAssociatedObjects();
-
         // This order is important.
         // 对当前对象进行析构
         if (cxx) object_cxxDestruct(obj);
-        // 移除所有对象的关联，例如把weak指针置nil
+        // 移除所有对象的关联对象
         if (assoc) _object_remove_assocations(obj);
+        //后续在清理sidetable是会将相关里的弱引用指针清除
         obj->clearDeallocating();
     }
-
     return obj;
 }
 

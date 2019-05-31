@@ -399,12 +399,14 @@ inline void
 objc_object::clearDeallocating()
 {
     if (slowpath(!isa.nonpointer)) {
+        //指针型 isa
         // Slow path for raw pointer isa.
-        sidetable_clearDeallocating();
+        sidetable_clearDeallocating(); //清理相关弱引用   清理引用计数表
     }
     else if (slowpath(isa.weakly_referenced  ||  isa.has_sidetable_rc)) {
+        // 当前isa是否有相关的 弱引用 对象 || isa 是否外挂了sidetable
         // Slow path for non-pointer isa with weak refs and/or side table data.
-        clearDeallocating_slow();
+        clearDeallocating_slow();// 清理相关弱引用   清除外挂的sidetable
     }
 
     assert(!sidetable_present());
