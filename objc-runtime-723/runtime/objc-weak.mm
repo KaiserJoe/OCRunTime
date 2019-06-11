@@ -396,12 +396,11 @@ weak_unregister_no_lock(weak_table_t *weak_table, id referent_id,
  */
 id 
 weak_register_no_lock(weak_table_t *weak_table, id referent_id, 
-                      id *referrer_id, bool crashIfDeallocating)
+                      id *referrer_id, bool crashIfDeallocating)//referrer_id == location
 {
-    // 被引用的对象
-    objc_object *referent = (objc_object *)referent_id;
-    // 弱引用的指针
-    objc_object **referrer = (objc_object **)referrer_id;
+    
+    objc_object *referent = (objc_object *)referent_id;     // 被引用的对象
+    objc_object **referrer = (objc_object **)referrer_id;   // 弱引用的指针
     
     if (!referent  ||  referent->isTaggedPointer()) return referent_id;
     
@@ -487,16 +486,17 @@ weak_clear_no_lock(weak_table_t *weak_table, id referent_id)
     weak_referrer_t *referrers;
     size_t count;
     
-    if (entry->out_of_line()) {
+    if (entry->out_of_line()) {//entry count >4
         referrers = entry->referrers;
         count = TABLE_SIZE(entry);
     } 
-    else {
+    else {//entry count <4
         referrers = entry->inline_referrers;
         count = WEAK_INLINE_COUNT;
     }
     
     for (size_t i = 0; i < count; ++i) {
+        //取出的是 当前对象 被修饰过的所有的弱引用指针
         objc_object **referrer = referrers[i];
         if (referrer) {
             if (*referrer == referent) {

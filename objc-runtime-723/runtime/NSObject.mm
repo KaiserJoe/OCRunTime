@@ -350,7 +350,7 @@ storeWeak(id *location, objc_object *newObj)
      例如下面在haveNew添加或创建weak指针时，其创建的SideTable内存地址是0x00000001008c8000，则其销毁时会取出同样的对象出来。
      */
     if (haveOld) {// haveOld == YES 从表中取出oldObj 指针对应的 SideTable
-        oldObj = *location;
+        oldObj = *location;//说明当前weak指针 曾经指向了别的对象地址
         oldTable = &SideTables()[oldObj];
     } else {
         oldTable = nil;
@@ -391,7 +391,7 @@ storeWeak(id *location, objc_object *newObj)
         }
     }
 
-    // 移除旧weak引用，添加新weak引用。(指针重指向和移除weak都是这里处理)
+    // 移除指针旧的指向 (指针重指向和移除weak都是这里处理)
     if (haveOld) {
         weak_unregister_no_lock(&oldTable->weak_table, oldObj, location);
     }
@@ -711,7 +711,7 @@ class AutoreleasePoolPage
     // never uses them.
 #   define EMPTY_POOL_PLACEHOLDER ((id*)1)
 
-#   define POOL_BOUNDARY nil
+#   define POOL_BOUNDARY nil  //哨兵 边界
     static pthread_key_t const key = AUTORELEASE_POOL_KEY;
     static uint8_t const SCRIBBLE = 0xA3;  // 0xA3A3A3A3 after releasing
     static size_t const SIZE = 
@@ -724,11 +724,11 @@ class AutoreleasePoolPage
 
     magic_t const magic;
     id *next;
-    pthread_t const thread;
-    AutoreleasePoolPage * const parent;
-    AutoreleasePoolPage *child;
-    uint32_t const depth;
-    uint32_t hiwat;
+    pthread_t const thread;                 //与线程 一一 对应
+    AutoreleasePoolPage * const parent;     //父节点
+    AutoreleasePoolPage *child;             //子节点
+    uint32_t const depth;                   //链表节点的个数
+    uint32_t hiwat;                         // high water mark（最高水位标记）
 
     // SIZE-sizeof(*this) bytes of contents follow
 
@@ -842,7 +842,7 @@ class AutoreleasePoolPage
         id *ret = next;  // faster than `return next-1` because of aliasing
         *next++ = obj;
         protect();
-        return ret;
+        return ret;  //早期版本 return next-1;
     }
 
     void releaseAll() 
@@ -992,9 +992,9 @@ class AutoreleasePoolPage
     static inline id *autoreleaseFast(id obj)
     {
         AutoreleasePoolPage *page = hotPage();
-        if (page && !page->full()) {
+        if (page && !page->full()) {  //page 有效,并且当前Page !full:this + size == end.
             return page->add(obj);
-        } else if (page) {
+        } else if (page) { //新开Page
             return autoreleaseFullPage(obj, page);
         } else {
             return autoreleaseNoPage(obj);
@@ -1091,9 +1091,10 @@ public:
     {
         id *dest;
         if (DebugPoolAllocation) {
+             //调试模式下 新建一个链表节点，并将一个哨兵对象添加到链表栈中
             // Each autorelease pool starts on a new pool page.
             dest = autoreleaseNewPage(POOL_BOUNDARY);
-        } else {
+        } else {//直接做插入操作
             dest = autoreleaseFast(POOL_BOUNDARY);
         }
         assert(dest == EMPTY_POOL_PLACEHOLDER || *dest == POOL_BOUNDARY);
@@ -2051,11 +2052,11 @@ void arr_init(void)
     return self;
 }
 
-+ (Class)class {
++ (Class)class { // [类对象 class]就是类本身.
     return self;
 }
 
-- (Class)class {
+- (Class)class {//实例对象,通过isa指针找到对应的类对象.
     return object_getClass(self);
 }
 
